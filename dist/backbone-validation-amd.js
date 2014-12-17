@@ -20,10 +20,9 @@
   
     var defaultOptions = {
       forceUpdate: false,
-      selector: 'name',
       labelFormatter: 'sentenceCase',
-      valid: Function.prototype,
-      invalid: Function.prototype
+      useEpoxy: true,
+      liveValidation: false
     };
   
   
@@ -145,7 +144,7 @@
         // Reduces the array of validators to an error message by
         // applying all the validators and returning the first error
         // message, if any.
-        var validationResult = _.reduce(getValidators(model, attr), function(memo, validator){
+        var validationResult = model.validationSuspended ? '' : _.reduce(getValidators(model, attr), function(memo, validator){
           // Pass the format functions plus the default
           // validators as the context to the validator
           var ctx = _.extend({}, formatFunctions, defaultValidators),
@@ -159,16 +158,17 @@
           }
           return memo;
         }, '');
-          if (validationResult === '') {
-              if (model._invalidAttrs && _.has(model._invalidAttrs, attr)) {
-                  delete model._invalidAttrs[attr];
-              }
-          } else {
-              model._invalidAttrs = model._invalidAttrs || {};
-              model._invalidAttrs[attr] = validationResult;
-          }
   
-          return validationResult;
+        if (validationResult === '') {
+          if (model._invalidAttrs && _.has(model._invalidAttrs, attr)) {
+            delete model._invalidAttrs[attr];
+          }
+        } else {
+          model._invalidAttrs = model._invalidAttrs || {};
+          model._invalidAttrs[attr] = validationResult;
+        }
+        
+        return validationResult;
       };
   
       // Loops through the model's attributes and validates them all.
@@ -242,7 +242,7 @@
           },
   
           checkValid: function(attribute, shouldValidate) {
-            if (!!shouldValidate) {
+            if (shouldValidate) {
                 this.isValid(attribute);
             }
             if (!this._invalidAttrs) {
@@ -252,7 +252,7 @@
           },
   
           validationMessage: function(attribute, shouldValidate) {
-            if (!!shouldValidate) {
+            if (shouldValidate) {
                 this.isValid(attribute);
             }
             if (!this._invalidAttrs) {
@@ -265,14 +265,19 @@
           // You can call it manually without any parameters to validate the
           // entire model.
           validate: function(attrs, setOptions){
-            var model = this,
-              validateAll = !attrs,
+            var model = this;
+  
+            if (model.validationSuspended) {
+              model.validationSuspended = false;
+            }
+  
+            var validateAll = !attrs,
               opt = _.extend({}, options, setOptions),
               validatedAttrs = getValidatedAttrs(model),
               allAttrs = _.extend({}, validatedAttrs, model.attributes, attrs),
-              changedAttrs = flatten(attrs || allAttrs),
-              
+              changedAttrs = flatten(attrs || allAttrs),            
               result = validateModel(model, allAttrs);
+            
   
             model._isValid = result.isValid;
             model._invalidAttrs = result.invalidAttrs;
@@ -297,7 +302,27 @@
   
       // Helper to mix in validation on a model
       var bindModel = function(view, model, options) {
-        _.extend(model, mixin(view, options));
+        _.extend(model, mixin(view, options));      
+        if (options.useEpoxy) {
+          var validatedAttrs = getValidatedAttrs(model);
+          model.computeds = model.computeds || {};
+          _.each(validatedAttrs, function(index, attr) {
+            model.computeds[attr + '_isValid'] = {
+              deps: [attr],
+              get: _.bind(function(value) {
+                return this.checkValid(attr, options.liveValidation);
+              }, model)
+            };
+            model.computeds[attr + '_error'] = {
+              deps: [attr],
+              get: _.bind(function(value) {
+                return this.validationMessage(attr, options.liveValidation);
+              }, model)
+            };
+          });
+  
+          model.initComputeds();
+        }
       };
   
       // Removes the methods added to a model
