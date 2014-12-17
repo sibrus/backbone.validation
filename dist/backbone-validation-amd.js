@@ -267,9 +267,11 @@
           validate: function(attrs, setOptions){
             var model = this;
   
+            var wasSuspended = model.validationSuspended;
+  
             if (model.validationSuspended) {
               model.validationSuspended = false;
-            }
+            }          
   
             var validateAll = !attrs,
               opt = _.extend({}, options, setOptions),
@@ -289,6 +291,12 @@
               model.trigger('validated', model._isValid, model, result.invalidAttrs);
               model.trigger('validated:' + (model._isValid ? 'valid' : 'invalid'), model, result.invalidAttrs);
             });
+  
+            // Trigger change events to force data-bound validation errors to be updated. Not needed if live validation was already happening.
+            if (wasSuspended || !opt.liveValidation) {
+              var changeEvents = _.map(_.keys(formView.model._invalidAttrs), function(key) { return 'change:' + key; }).join(' ');
+              model.trigger(changeEvents);
+            }
   
             // Return any error messages to Backbone, unless the forceUpdate flag is set.
             // Then we do not return anything and fools Backbone to believe the validation was
