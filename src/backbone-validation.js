@@ -111,7 +111,7 @@ Backbone.Validation = (function(_){
       // with a validation method to call, the value to validate against
       // and the specified error message, if any
       return _.reduce(attrValidationSet, function(memo, attrValidation) {
-        _.each(_.without(_.keys(attrValidation), 'msg'), function(validator) {
+        _.each(_.without(_.keys(attrValidation), 'msg', 'deps'), function(validator) {
           memo.push({
             fn: defaultValidators[validator],
             val: attrValidation[validator],
@@ -294,13 +294,13 @@ Backbone.Validation = (function(_){
         model.computeds = model.computeds || {};
         _.each(validatedAttrs, function(index, attr) {
           model.computeds[attr + '_isValid'] = {
-            deps: [attr],
+            deps: model.validation[attr].deps || [attr],
             get: _.bind(function(value) {
               return this.checkValid(attr, options.liveValidation);
             }, model)
           };
           model.computeds[attr + '_error'] = {
-            deps: [attr],
+            deps: model.validation[attr].deps || [attr],
             get: _.bind(function(value) {
               return this.validationMessage(attr, options.liveValidation);
             }, model)
