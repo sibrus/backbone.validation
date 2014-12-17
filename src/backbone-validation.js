@@ -131,7 +131,7 @@ Backbone.Validation = (function(_){
       // Reduces the array of validators to an error message by
       // applying all the validators and returning the first error
       // message, if any.
-      return _.reduce(getValidators(model, attr), function(memo, validator){
+      var validationResult = _.reduce(getValidators(model, attr), function(memo, validator){
         // Pass the format functions plus the default
         // validators as the context to the validator
         var ctx = _.extend({}, formatFunctions, defaultValidators),
@@ -145,6 +145,16 @@ Backbone.Validation = (function(_){
         }
         return memo;
       }, '');
+        if (validationResult === '') {
+            if (model._invalidAttrs && _.has(model._invalidAttrs, attr)) {
+                delete model._invalidAttrs[attr];
+            }
+        } else {
+            model._invalidAttrs = model._invalidAttrs || {};
+            model._invalidAttrs[attr] = validationResult;
+        }
+
+        return validationResult;
     };
 
     // Loops through the model's attributes and validates them all.
@@ -217,40 +227,41 @@ Backbone.Validation = (function(_){
           return this.validation ? this._isValid : true;
         },
 
+        checkValid: function(attribute, shouldValidate) {
+          if (!!shouldValidate) {
+              this.isValid(attribute);
+          }
+          if (!this._invalidAttrs) {
+              return true;
+          }
+          return !_.has(this._invalidAttrs, attribute);
+        },
+
+        validationMessage: function(attribute, shouldValidate) {
+          if (!!shouldValidate) {
+              this.isValid(attribute);
+          }
+          if (!this._invalidAttrs) {
+              return null;
+          }
+          return _.has(this._invalidAttrs, attribute) ? this._invalidAttrs[attribute] : null;
+        },
+
         // This is called by Backbone when it needs to perform validation.
         // You can call it manually without any parameters to validate the
         // entire model.
         validate: function(attrs, setOptions){
           var model = this,
-              validateAll = !attrs,
-              opt = _.extend({}, options, setOptions),
-              validatedAttrs = getValidatedAttrs(model),
-              allAttrs = _.extend({}, validatedAttrs, model.attributes, attrs),
-              changedAttrs = flatten(attrs || allAttrs),
-
-              result = validateModel(model, allAttrs);
+            validateAll = !attrs,
+            opt = _.extend({}, options, setOptions),
+            validatedAttrs = getValidatedAttrs(model),
+            allAttrs = _.extend({}, validatedAttrs, model.attributes, attrs),
+            changedAttrs = flatten(attrs || allAttrs),
+            
+            result = validateModel(model, allAttrs);
 
           model._isValid = result.isValid;
-
-          // After validation is performed, loop through all validated attributes
-          // and call the valid callbacks so the view is updated.
-          _.each(validatedAttrs, function(val, attr){
-            var invalid = result.invalidAttrs.hasOwnProperty(attr);
-            if(!invalid){
-              opt.valid(view, attr, opt.selector);
-            }
-          });
-
-          // After validation is performed, loop through all validated and changed attributes
-          // and call the invalid callback so the view is updated.
-          _.each(validatedAttrs, function(val, attr){
-            var invalid = result.invalidAttrs.hasOwnProperty(attr),
-                changed = changedAttrs.hasOwnProperty(attr);
-
-            if(invalid && (changed || validateAll)){
-              opt.invalid(view, attr, result.invalidAttrs[attr], opt.selector);
-            }
-          });
+          model._invalidAttrs = result.invalidAttrs;
 
           // Trigger validated events.
           // Need to defer this so the model is actually updated before
@@ -298,36 +309,16 @@ Backbone.Validation = (function(_){
     return {
 
       // Current version of the library
-      version: '0.9.1',
+      version: '0.9.1-sibrus',
 
       // Called to configure the default options
       configure: function(options) {
         _.extend(defaultOptions, options);
       },
 
-      // Hooks up validation on a view with a model
-      // or collection
-      bind: function(view, options) {
-        options = _.extend({}, defaultOptions, defaultCallbacks, options);
-
-        var model = options.model || view.model,
-            collection = options.collection || view.collection;
-
-        if(typeof model === 'undefined' && typeof collection === 'undefined'){
-          throw 'Before you execute the binding your view must have a model or a collection.\n' +
-                'See http://thedersen.com/projects/backbone-validation/#using-form-model-validation for more information.';
-        }
-
-        if(model) {
-          bindModel(view, model, options);
-        }
-        else if(collection) {
-          collection.each(function(model){
-            bindModel(view, model, options);
-          });
-          collection.bind('add', collectionAdd, {view: view, options: options});
-          collection.bind('remove', collectionRemove);
-        }
+        bind: function(model, options) {
+        options = _.extend({}, defaultOptions, options);
+        bindModel(null, model, options);
       },
 
       // Removes validation from a view with a model
@@ -354,31 +345,6 @@ Backbone.Validation = (function(_){
       mixin: mixin(null, defaultOptions)
     };
   }());
-
-
-  // Callbacks
-  // ---------
-
-  var defaultCallbacks = Validation.callbacks = {
-
-    // Gets called when a previously invalid field in the
-    // view becomes valid. Removes any error message.
-    // Should be overridden with custom functionality.
-    valid: function(view, attr, selector) {
-      view.$('[' + selector + '~="' + attr + '"]')
-          .removeClass('invalid')
-          .removeAttr('data-error');
-    },
-
-    // Gets called when a field in the view becomes invalid.
-    // Adds a error message.
-    // Should be overridden with custom functionality.
-    invalid: function(view, attr, error, selector) {
-      view.$('[' + selector + '~="' + attr + '"]')
-          .addClass('invalid')
-          .attr('data-error', error);
-    }
-  };
 
 
   // Patterns

@@ -123,12 +123,12 @@ module.exports = function(grunt) {
     }
   });
 
-  grunt.registerTask('default', ['rig', 'jshint', 'buster', 'uglify']);
+  grunt.registerTask('default', ['rig', 'jshint', /* 'buster', */ 'uglify']);
   grunt.registerTask('publish', ['docco', 'shell']);
 
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-uglify');
-  grunt.loadNpmTasks('grunt-buster');
+  //grunt.loadNpmTasks('grunt-buster');
   grunt.loadNpmTasks('grunt-docco');
   grunt.loadNpmTasks('grunt-shell');
   grunt.loadNpmTasks('grunt-rigger');
