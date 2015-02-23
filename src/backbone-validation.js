@@ -280,7 +280,7 @@ Backbone.Validation = (function(_){
 
           // Trigger change events to force data-bound validation errors to be updated. Not needed if live validation was already happening.
           if (wasSuspended || !opt.liveValidation) {
-            var changeEvents = _.map(_.keys(formView.model._invalidAttrs), function(key) { return 'change:' + key; }).join(' ');
+            var changeEvents = _.map(_.keys(model._invalidAttrs), function(key) { return 'change:' + key; }).join(' ');
             model.trigger(changeEvents);
           }
 

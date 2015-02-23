@@ -1,6 +1,6 @@
 // Backbone.Validation v0.9.1-sibrus
 //
-// Copyright (c) 2011-2014 Thomas Pedersen
+// Copyright (c) 2011-2015 Thomas Pedersen
 // Distributed under MIT License
 //
 // Documentation and full license available at:
@@ -287,7 +287,7 @@ Backbone.Validation = (function(_){
 
           // Trigger change events to force data-bound validation errors to be updated. Not needed if live validation was already happening.
           if (wasSuspended || !opt.liveValidation) {
-            var changeEvents = _.map(_.keys(formView.model._invalidAttrs), function(key) { return 'change:' + key; }).join(' ');
+            var changeEvents = _.map(_.keys(model._invalidAttrs), function(key) { return 'change:' + key; }).join(' ');
             model.trigger(changeEvents);
           }
 
