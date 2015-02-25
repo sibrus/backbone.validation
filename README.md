@@ -67,7 +67,6 @@ You can specify an error message per attribute by adding a `msg` property like t
 MyModel = Backbone.Model.extend({
   validation: {
     email: {
-      required: true,
       pattern: 'email',
       msg: 'Please enter a valid email'
     }
@@ -673,6 +672,8 @@ _.extend(Backbone.Validation.validators, {
 ### How can I allow empty values but still validate if the user enters something?
 
 By default, if you configure a validator for an attribute, it is considered required. However, if you want to allow empty values and still validate when something is entered, add required: false in addition to other validators.
+
+One notable exception is the 'pattern' rule - which always considers the empty value valid.
 
 ```js
 validation: {
