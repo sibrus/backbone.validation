@@ -267,7 +267,7 @@
           validate: function(attrs, setOptions){
             var model = this;
   
-            if (typeof(model.viewModel !== 'undefined') && model.viewModel.validationSuspended()) {
+            if (typeof(model.viewModel) !== 'undefined' && model.viewModel.validationSuspended()) {
               model.viewModel.validationSuspended(false);
             }          
   
