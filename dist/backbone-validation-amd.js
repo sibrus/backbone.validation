@@ -1,6 +1,6 @@
-// Backbone.Validation v0.9.1-sibrus
+// Backbone.Validation v0.9.2-sibrus
 //
-// Copyright (c) 2011-2014 Thomas Pedersen
+// Copyright (c) 2011-2015 Thomas Pedersen
 // Distributed under MIT License
 //
 // Documentation and full license available at:
@@ -356,7 +356,7 @@
       return {
   
         // Current version of the library
-        version: '0.9.1-sibrus',
+        version: '0.9.2-sibrus',
   
         // Called to configure the default options
         configure: function(options) {
@@ -569,8 +569,10 @@
         // Validates that the value has to be a string with length equal to
         // the length value specified
         length: function(value, attr, length, model) {
-          if (!_.isString(value) || value.length !== length) {
-            return this.format(defaultMessages.length, this.formatLabel(attr, model), length);
+          if (_.isString(value)) {
+            if (value.length !== length) {
+              return this.format(defaultMessages.length, this.formatLabel(attr, model), length);
+            }
           }
         },
   
@@ -578,8 +580,10 @@
         // Validates that the value has to be a string with length equal to or greater than
         // the min length value specified
         minLength: function(value, attr, minLength, model) {
-          if (!_.isString(value) || value.length < minLength) {
-            return this.format(defaultMessages.minLength, this.formatLabel(attr, model), minLength);
+          if (_.isString(value)) {
+            if (value.length < minLength) {
+              return this.format(defaultMessages.minLength, this.formatLabel(attr, model), minLength);
+            }
           }
         },
   
@@ -587,8 +591,10 @@
         // Validates that the value has to be a string with length equal to or less than
         // the max length value specified
         maxLength: function(value, attr, maxLength, model) {
-          if (!_.isString(value) || value.length > maxLength) {
-            return this.format(defaultMessages.maxLength, this.formatLabel(attr, model), maxLength);
+          if (_.isString(value)) {
+            if (value.length > maxLength) {
+              return this.format(defaultMessages.maxLength, this.formatLabel(attr, model), maxLength);
+            }
           }
         },
   
@@ -596,8 +602,10 @@
         // Validates that the value has to be a string and equal to or between
         // the two numbers specified
         rangeLength: function(value, attr, range, model) {
-          if (!_.isString(value) || value.length < range[0] || value.length > range[1]) {
-            return this.format(defaultMessages.rangeLength, this.formatLabel(attr, model), range[0], range[1]);
+          if (_.isString(value)) {
+            if (value.length < range[0] || value.length > range[1]) {
+              return this.format(defaultMessages.rangeLength, this.formatLabel(attr, model), range[0], range[1]);
+            }
           }
         },
   
