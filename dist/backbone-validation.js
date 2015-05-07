@@ -1,4 +1,4 @@
-// Backbone.Validation v0.9.2-sibrus
+// Backbone.Validation v0.9.3-sibrus
 //
 // Copyright (c) 2011-2015 Thomas Pedersen
 // Distributed under MIT License
@@ -38,46 +38,6 @@ Backbone.Validation = (function(_){
         return typeof args[number] !== 'undefined' ? args[number] : match;
       });
     }
-  };
-
-  // Flattens an object
-  // eg:
-  //
-  //     var o = {
-  //       address: {
-  //         street: 'Street',
-  //         zip: 1234
-  //       }
-  //     };
-  //
-  // becomes:
-  //
-  //     var o = {
-  //       'address.street': 'Street',
-  //       'address.zip': 1234
-  //     };
-  var flatten = function (obj, into, prefix) {
-    into = into || {};
-    prefix = prefix || '';
-
-    _.each(obj, function(val, key) {
-      if(obj.hasOwnProperty(key)) {
-        if (val && typeof val === 'object' && !(
-          val instanceof Array ||
-          val instanceof Date ||
-          val instanceof RegExp ||
-          val instanceof Backbone.Model ||
-          val instanceof Backbone.Collection)
-        ) {
-          flatten(val, into, prefix + key + '.');
-        }
-        else {
-          into[prefix + key] = val;
-        }
-      }
-    });
-
-    return into;
   };
 
   // Validation
@@ -171,10 +131,9 @@ Backbone.Validation = (function(_){
       var error,
           invalidAttrs = {},
           isValid = true,
-          computed = _.clone(attrs),
-          flattened = flatten(attrs);
+          computed = _.clone(attrs);
 
-      _.each(flattened, function(val, attr) {
+      _.each(attrs, function(val, attr) {
         error = validateAttr(model, attr, val, computed);
         if (error) {
           invalidAttrs[attr] = error;
@@ -218,14 +177,14 @@ Backbone.Validation = (function(_){
         // entire model is valid. Passing true will force a validation
         // of the model.
         isValid: function(option) {
-          var flattened = flatten(this.attributes);
+          var attributesCopy = _.clone(this.attributes);
 
           if(_.isString(option)){
-            return !validateAttr(this, option, flattened[option], _.extend({}, this.attributes));
+            return !validateAttr(this, option, attributesCopy[option], _.extend({}, this.attributes));
           }
           if(_.isArray(option)){
             return _.reduce(option, function(memo, attr) {
-              return memo && !validateAttr(this, attr, flattened[attr], _.extend({}, this.attributes));
+              return memo && !validateAttr(this, attr, attributesCopy[attr], _.extend({}, this.attributes));
             }, true, this);
           }
           if(option === true) {
@@ -268,7 +227,7 @@ Backbone.Validation = (function(_){
             opt = _.extend({}, options, setOptions),
             validatedAttrs = getValidatedAttrs(model),
             allAttrs = _.extend({}, validatedAttrs, model.attributes, attrs),
-            changedAttrs = flatten(attrs || allAttrs),            
+            changedAttrs = attrs || allAttrs,
             result = validateModel(model, allAttrs);
           
 
@@ -359,7 +318,7 @@ Backbone.Validation = (function(_){
     return {
 
       // Current version of the library
-      version: '0.9.2-sibrus',
+      version: '0.9.3-sibrus',
 
       // Called to configure the default options
       configure: function(options) {
