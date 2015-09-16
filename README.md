@@ -1,6 +1,6 @@
 # Backbone.Validation
 
-This is a heavily modified version of https://github.com/thedersen/backbone.validation - it is NOT compatible with the original. Basically all the "view" parts have been completely ripped out and replaced with a tight integration with knockout+knockback. The customization is tailored towards a single project, it is not suitable for general consumption.
+This is a heavily modified version of https://github.com/thedersen/backbone.validation - it is NOT compatible with the original. Basically all the "view" parts have been completely ripped out and replaced with a tight integration with backbone.epoxy. The customization is tailored towards a single project, it is not suitable for general consumption.
 
 ## Getting started
 
