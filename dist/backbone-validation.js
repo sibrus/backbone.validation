@@ -96,7 +96,7 @@ Backbone.Validation = (function(_){
       // Reduces the array of validators to an error message by
       // applying all the validators and returning the first error
       // message, if any.
-      var isSuspended = (model.viewModel) ? model.viewModel.validationSuspended() : false;
+      var isSuspended = model.get('validationSuspended') || false;
       var validationResult = isSuspended ? '' : _.reduce(getValidators(model, attr), function(memo, validator){
         // Pass the format functions plus the default
         // validators as the context to the validator
@@ -219,9 +219,7 @@ Backbone.Validation = (function(_){
         validate: function(attrs, setOptions){
           var model = this;
 
-          if (typeof(model.viewModel) !== 'undefined' && model.viewModel.validationSuspended()) {
-            model.viewModel.validationSuspended(false);
-          }          
+          model.set('validationSuspended', false);
 
           var validateAll = !attrs,
             opt = _.extend({}, options, setOptions),
@@ -243,9 +241,7 @@ Backbone.Validation = (function(_){
           });
 
           // Trigger change events to force data-bound validation errors to be updated. Not needed if live validation was already happening.
-          if (!opt.liveValidation && typeof(model.viewModel) !== 'undefined') {
-            model.viewModel.validationVersion(model.viewModel.validationVersion() + 1);
-          }
+          model.set('validationVersion', model.get('validationVersion') + 1);
 
           // Return any error messages to Backbone, unless the forceUpdate flag is set.
           // Then we do not return anything and fools Backbone to believe the validation was
@@ -260,38 +256,36 @@ Backbone.Validation = (function(_){
     // Helper to mix in validation on a model
     var bindModel = function(view, model, options) {
       _.extend(model, mixin(view, options));
-      if (typeof(model.viewModel) !== 'undefined' && typeof(ko) !== 'undefined') {
-        var viewModel = model.viewModel;
-        if (typeof(viewModel.validationSuspended) === 'undefined') {
-          viewModel.validationSuspended = ko.observable(true);
+      console.log('Starting to bind...');
+      if (model instanceof Backbone.Epoxy.Model) {
+        console.log('Really binding...');
+        if (model.get('validationSuspended') === undefined) {
+          model.set('validationSuspended', true);
         }
-        if (typeof(viewModel.validationVersion) === 'undefined') {
-          viewModel.validationVersion = ko.observable(1);
+        if (model.get('validationVersion') === undefined) {
+          model.set('validationVersion', 1);
         }
-        viewModel.validation = {};
+
         var validatedAttrs = getValidatedAttrs(model);
         _.each(validatedAttrs, function(index, attr) {
-          viewModel.validation[attr + '_invalid'] = ko.computed(function() {
-            var dep1 = viewModel.validationVersion();
-            var dep2 = viewModel.validationSuspended();
-            var deps = model.validation[attr].deps || [attr];
-            _.each(deps, function(dep_attr) {
-              var dep_value = viewModel[dep_attr]();
-            });
+          var deps = ['validationSuspended', 'validationVersion'];
+          deps = deps.concat(model.validation[attr].deps || [attr]);
 
-            return !model.checkValid(attr, options.liveValidation);
-          });
-          viewModel.validation[attr + '_error'] = ko.computed(function() {
-            var dep1 = viewModel.validationVersion();
-            var dep2 = viewModel.validationSuspended();
-            var deps = model.validation[attr].deps || [attr];
-            _.each(deps, function(dep_attr) {
-              var dep_value = viewModel[dep_attr]();
-            });
-
-            return model.validationMessage(attr, options.liveValidation);
-          });
+          model.computeds[attr + '_invalid'] = {
+            deps: deps,
+            get: function() {
+              return !model.checkValid(attr, options.liveValidation);
+            }
+          };
+          model.computeds[attr + '_error'] = {
+            deps: deps,
+            get: function() {
+              return model.validationMessage(attr, options.liveValidation);
+            }
+          };
         });
+
+        model.initComputeds();
       }
     };
 
