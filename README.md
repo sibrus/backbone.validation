@@ -4,10 +4,7 @@ This is a heavily modified version of https://github.com/thedersen/backbone.vali
 
 ## Getting started
 
-Short version: include the following in your view template and use either the 'desktop' or 'tablet' layout:
-```
-{% set dataBinding = true %}
-```
+See the project documentation for examples of use.
 
 ### Configure validation rules on the Model
 
@@ -18,7 +15,7 @@ Validating complex objects is also supported. To configure validation rules for 
 #### Example
 
 ```js
-var SomeModel = Backbone.Model.extend({
+var SomeModel = Backbone.Epoxy.Model.extend({
   validation: {
     name: {
       required: true
@@ -44,7 +41,7 @@ var SomeModel = Backbone.Model.extend({
 });
 
 // validation attribute can also be defined as a function returning a hash
-var SomeModel = Backbone.Model.extend({
+var SomeModel = Backbone.Epoxy.Model.extend({
   validation: function() {
     return {
       name: {
@@ -64,7 +61,7 @@ Backbone.Validation comes with a set of default error messages. If you don't lik
 You can specify an error message per attribute by adding a `msg` property like this:
 
 ```js
-MyModel = Backbone.Model.extend({
+MyModel = Backbone.Epoxy.Model.extend({
   validation: {
     email: {
       pattern: 'email',
@@ -77,7 +74,7 @@ MyModel = Backbone.Model.extend({
 Or, you can specify an error message per validator, by adding an array of validators like this:
 
 ```js
-MyModel = Backbone.Model.extend({
+MyModel = Backbone.Epoxy.Model.extend({
   validation: {
     email: [{
       required: true,
@@ -94,9 +91,7 @@ The `msg` property can also be a function returning a string.
 
 ## Validation on the view
 
-See prototype code. Particularly `ZenithMobilePOSBundle:Prototype:form.html.twig`
-
-Short version - define validation on the model, wrap it in a ViewModel, bind it to the view, use the `validate` or `isValid` and `errorMsg` binding handlers. See `ZenithMobilePOSBundle:Layout:_dataBinding.html.twig` for the details on how the handlers work, or look at the prototype code for examples of how they are used.
+See the validation section of the tutorials in the project documentation.
 
 ## Using model validation
 
@@ -104,14 +99,18 @@ The philosophy behind this way of using the plugin, is to give you an easy way t
 
 ### Validation mix-in
 
-If your model is being wrapped in a ViewModel, which should be the case 99% of the time, you do not need to do this. It is only needed if you are ONLY doing validation in the model.
-
 To add validation to your models, call `bind` in the `initialize` method. 
 
 ```js
+var MyModel = Backbone.Epoxy.Model.extend({
 	initialize: function() {
         	Backbone.Validation.bind(this, {liveValidation: false});
-        },
+    },
+	//You need a computeds hash even if it is empty
+	computeds: {
+	}
+	// ...
+});
 ```
 
 ## Methods
